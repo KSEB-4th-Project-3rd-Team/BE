@@ -31,6 +31,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    // mySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -40,6 +41,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     // Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0' // 최신 버전 기준
+    // env로 비번 숨기기 위한것..
+    implementation 'io.github.cdimascio:java-dotenv:5.2.2'
+
 }
 
 tasks.named('test') {
