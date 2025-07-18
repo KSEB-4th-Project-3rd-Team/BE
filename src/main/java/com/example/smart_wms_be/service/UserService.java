@@ -26,7 +26,7 @@ public class UserService {
     public UserResponse createUser(CreateUserRequest request) {
         User user = User.builder()
                 .username(request.getUsername())
-                .password(request.getPassword())
+                .password(request.getPassword()) // 이 부분을 password_hash로 변경해야 합니다.
                 .email(request.getEmail())
                 .fullName(request.getFullName())
                 .role(request.getRole())
