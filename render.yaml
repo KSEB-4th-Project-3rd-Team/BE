@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: smart-wms-be
+    env: docker
+    plan: free # or your desired plan
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smart-wms-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: smart-wms-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: smart-wms-db
+          property: password
+
+databases:
+  - name: smart-wms-db
+    plan: free # or your desired plan
+    databaseName: wms
+    user: wms_user
