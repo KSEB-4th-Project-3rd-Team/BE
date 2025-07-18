@@ -8,6 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface InOutOrderRepository extends JpaRepository<InOutOrder, Long> {
-    // 타입 + 상태로 주문 목록 조회
+
+    // 주문 유형 + 상태로 조회
     List<InOutOrder> findByTypeAndStatus(OrderType type, OrderStatus status);
+
+    // 주문 유형 + 상태로 개수 조회
+    int countByTypeAndStatus(OrderType type, OrderStatus status);
 }
