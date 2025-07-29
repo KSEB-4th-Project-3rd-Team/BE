@@ -1,6 +1,7 @@
 package com.example.smart_wms_be.controller;
 
 import com.example.smart_wms_be.dto.CreateScheduleRequest;
+import com.example.smart_wms_be.dto.MessageResponse;
 import com.example.smart_wms_be.dto.ScheduleResponse;
 import com.example.smart_wms_be.service.ScheduleService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,5 +34,11 @@ public class ScheduleController {
     @PostMapping
     public ScheduleResponse createSchedule(@RequestBody CreateScheduleRequest request) {
         return scheduleService.createSchedule(request);
+    }
+
+    @DeleteMapping("/{scheduleId}")
+    public MessageResponse deleteSchedule(@PathVariable Long scheduleId) {
+        scheduleService.deleteSchedule(scheduleId);
+        return new MessageResponse("Schedule deleted successfully");
     }
 }

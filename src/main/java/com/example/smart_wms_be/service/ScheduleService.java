@@ -27,6 +27,7 @@ public class ScheduleService {
     }
 
     public ScheduleResponse createSchedule(CreateScheduleRequest request) {
+        System.out.println("Creating schedule: " + request.getTitle() + " from " + request.getStartTime() + " to " + request.getEndTime());
         Schedule saved = scheduleRepository.save(
                 Schedule.builder()
                         .title(request.getTitle())
@@ -35,6 +36,14 @@ public class ScheduleService {
                         .type(request.getType())
                         .build()
         );
+        System.out.println("Schedule created with ID: " + saved.getId());
         return ScheduleResponse.fromEntity(saved);
+    }
+
+    public void deleteSchedule(Long scheduleId) {
+        if (!scheduleRepository.existsById(scheduleId)) {
+            throw new IllegalArgumentException("Schedule not found with id: " + scheduleId);
+        }
+        scheduleRepository.deleteById(scheduleId);
     }
 }
