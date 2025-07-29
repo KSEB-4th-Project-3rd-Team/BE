@@ -26,12 +26,12 @@ public class InOutOrderService {
     private final InventoryRepository inventoryRepository;
     private final InventoryTransactionRepository inventoryTransactionRepository;
 
-    // 전체 주문 목록 조회 (필터 optional)
+    // 전체 주문 목록 조회 (필터 optional) - 최신순 정렬
     @Transactional(readOnly = true)
     public List<InOutOrderResponse> getOrders(OrderType type, OrderStatus status) {
         List<InOutOrder> orders = (type != null && status != null)
                 ? orderRepository.findByTypeAndStatus(type, status)
-                : orderRepository.findAll();
+                : orderRepository.findAllByOrderByIdDesc();
 
         return orders.stream().map(order -> InOutOrderResponse.builder()
                 .orderId(order.getId())
@@ -40,6 +40,8 @@ public class InOutOrderService {
                 .companyName(order.getCompany().getCompanyName())
                 .companyCode(order.getCompany().getCompanyCode())
                 .expectedDate(order.getExpectedDate())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
                 .items(order.getItems().stream().map(item -> 
                     InOutOrderResponse.OrderItemDto.builder()
                         .itemId(item.getItem().getId())
@@ -87,6 +89,8 @@ public class InOutOrderService {
                 .companyName(order.getCompany().getCompanyName())
                 .companyCode(order.getCompany().getCompanyCode())
                 .expectedDate(order.getExpectedDate())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
                 .items(order.getItems().stream().map(item -> 
                     InOutOrderResponse.OrderItemDto.builder()
                         .itemId(item.getItem().getId())
@@ -128,6 +132,8 @@ public class InOutOrderService {
                 .companyName(order.getCompany().getCompanyName())
                 .companyCode(order.getCompany().getCompanyCode())
                 .expectedDate(order.getExpectedDate())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
                 .items(order.getItems().stream().map(item -> 
                     InOutOrderResponse.OrderItemDto.builder()
                         .itemId(item.getItem().getId())

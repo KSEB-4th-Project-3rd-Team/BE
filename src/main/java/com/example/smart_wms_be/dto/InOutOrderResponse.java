@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -16,6 +17,8 @@ public class InOutOrderResponse {
     private String companyName;
     private String companyCode;
     private LocalDate expectedDate;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private List<OrderItemDto> items;
     
     @Getter

@@ -11,6 +11,9 @@ import java.util.Optional;
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
+    // 모든 재고를 최신 업데이트순으로 조회 (ID 역순)
+    List<Inventory> findAllByOrderByIdDesc();
+
     // 재고 필터링 조회 (itemCode와 locationCode 부분 일치)
     List<Inventory> findByItem_ItemCodeContainingAndLocationCodeContaining(String itemCode, String locationCode);
 

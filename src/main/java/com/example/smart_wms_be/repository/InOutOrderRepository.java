@@ -11,6 +11,9 @@ import java.util.List;
 
 public interface InOutOrderRepository extends JpaRepository<InOutOrder, Long> {
 
+    // 모든 주문을 최신순으로 조회 (ID 역순)
+    List<InOutOrder> findAllByOrderByIdDesc();
+
     // 주문 유형 + 상태로 조회
     List<InOutOrder> findByTypeAndStatus(OrderType type, OrderStatus status);
 

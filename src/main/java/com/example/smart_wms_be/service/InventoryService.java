@@ -23,16 +23,21 @@ public class InventoryService {
     private final InventoryTransactionRepository transactionRepository;
 
     public List<InventoryResponse> getInventory(String itemCode, String locationCode) {
-        return inventoryRepository
-                .findByItem_ItemCodeContainingAndLocationCodeContaining(
+        // 필터가 있으면 필터링, 없으면 전체 조회 (최신순)
+        List<Inventory> inventories = (itemCode != null && !itemCode.isEmpty()) || 
+                                     (locationCode != null && !locationCode.isEmpty())
+                ? inventoryRepository.findByItem_ItemCodeContainingAndLocationCodeContaining(
                         itemCode == null ? "" : itemCode,
-                        locationCode == null ? "" : locationCode
-                ).stream().map(InventoryResponse::fromEntity)
+                        locationCode == null ? "" : locationCode)
+                : inventoryRepository.findAllByOrderByIdDesc();
+                
+        return inventories.stream()
+                .map(InventoryResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
     public List<InventoryTransactionResponse> getHistory() {
-        return transactionRepository.findAll().stream()
+        return transactionRepository.findAllByOrderByIdDesc().stream()
                 .map(InventoryTransactionResponse::fromEntity)
                 .collect(Collectors.toList());
     }
