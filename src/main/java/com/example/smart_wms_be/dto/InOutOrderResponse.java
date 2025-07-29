@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
@@ -13,5 +14,18 @@ public class InOutOrderResponse {
     private OrderType type;
     private String status;
     private String companyName;
+    private String companyCode;
     private LocalDate expectedDate;
+    private List<OrderItemDto> items;
+    
+    @Getter
+    @Builder
+    public static class OrderItemDto {
+        private Long itemId;
+        private String itemName;
+        private String itemCode;
+        private String specification;
+        private Integer requestedQuantity;
+        private Integer processedQuantity;
+    }
 }
