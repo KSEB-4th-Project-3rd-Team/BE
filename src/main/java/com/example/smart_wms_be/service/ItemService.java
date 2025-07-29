@@ -42,8 +42,27 @@ public class ItemService {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("Item not found"));
 
-        item.setUnitPriceIn(request.getUnitPriceIn());
-        item.setUnitPriceOut(request.getUnitPriceOut());
+        if (request.getItemCode() != null) {
+            item.setItemCode(request.getItemCode());
+        }
+        if (request.getItemName() != null) {
+            item.setItemName(request.getItemName());
+        }
+        if (request.getItemGroup() != null) {
+            item.setItemGroup(request.getItemGroup());
+        }
+        if (request.getSpec() != null) {
+            item.setSpec(request.getSpec());
+        }
+        if (request.getUnit() != null) {
+            item.setUnit(request.getUnit());
+        }
+        if (request.getUnitPriceIn() != null) {
+            item.setUnitPriceIn(request.getUnitPriceIn());
+        }
+        if (request.getUnitPriceOut() != null) {
+            item.setUnitPriceOut(request.getUnitPriceOut());
+        }
 
         return ItemResponse.fromEntity(itemRepository.save(item));
     }

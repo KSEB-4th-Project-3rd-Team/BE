@@ -40,8 +40,29 @@ public class CompanyService {
 
     public CompanyResponse updateCompany(Long id, UpdateCompanyRequest request) {
         Company company = companyRepository.findById(id).orElseThrow();
-        company.setAddress(request.getAddress());
-        company.setContactPerson(request.getContactPerson());
+        
+        if (request.getCompanyCode() != null) {
+            company.setCompanyCode(request.getCompanyCode());
+        }
+        if (request.getCompanyName() != null) {
+            company.setCompanyName(request.getCompanyName());
+        }
+        if (request.getContactPerson() != null) {
+            company.setContactPerson(request.getContactPerson());
+        }
+        if (request.getContactPhone() != null) {
+            company.setContactPhone(request.getContactPhone());
+        }
+        if (request.getContactEmail() != null) {
+            company.setContactEmail(request.getContactEmail());
+        }
+        if (request.getAddress() != null) {
+            company.setAddress(request.getAddress());
+        }
+        if (request.getType() != null) {
+            company.setType(request.getType());
+        }
+        
         return CompanyResponse.fromEntity(companyRepository.save(company));
     }
 
