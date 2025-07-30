@@ -18,6 +18,7 @@ public class UserResponse {
     private Role role;
     private Status status;
     private LocalDateTime lastLogin;
+    private LocalDateTime joinedAt;
 
     public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
@@ -28,6 +29,7 @@ public class UserResponse {
                 .role(user.getRole())
                 .status(user.getStatus())
                 .lastLogin(user.getLastLogin())
+                .joinedAt(user.getJoinedAt())
                 .build();
     }
 }

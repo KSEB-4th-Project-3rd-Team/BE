@@ -28,6 +28,11 @@ public class UserService {
 
     // 사용자 생성
     public UserResponse createUser(CreateUserRequest request) {
+        // 중복 확인
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("이미 존재하는 사용자명입니다.");
+        }
+        
         // 비밀번호 해시화
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         
