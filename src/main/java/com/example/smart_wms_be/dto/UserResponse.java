@@ -1,6 +1,7 @@
 package com.example.smart_wms_be.dto;
 
 import com.example.smart_wms_be.domain.Role;
+import com.example.smart_wms_be.domain.Status;
 import com.example.smart_wms_be.domain.User;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,7 +16,7 @@ public class UserResponse {
     private String email;
     private String fullName;
     private Role role;
-    private Boolean isActive;
+    private Status status;
     private LocalDateTime lastLogin;
 
     public static UserResponse fromEntity(User user) {
@@ -25,7 +26,7 @@ public class UserResponse {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole())
-                .isActive(user.getIsActive())
+                .status(user.getStatus())
                 .lastLogin(user.getLastLogin())
                 .build();
     }

@@ -1,11 +1,14 @@
 package com.example.smart_wms_be.service;
 
 import com.example.smart_wms_be.domain.User;
+import com.example.smart_wms_be.domain.Status;
 import com.example.smart_wms_be.dto.*;
 import com.example.smart_wms_be.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +17,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     // 전체 사용자 조회
     public List<UserResponse> getAllUsers() {
@@ -24,13 +28,21 @@ public class UserService {
 
     // 사용자 생성
     public UserResponse createUser(CreateUserRequest request) {
+        // 비밀번호 해시화
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
+        
+        LocalDateTime now = LocalDateTime.now();
+        
         User user = User.builder()
                 .username(request.getUsername())
-                .password(request.getPassword()) // 이 부분을 password_hash로 변경해야 합니다.
+                .password(hashedPassword)
                 .email(request.getEmail())
                 .fullName(request.getFullName())
                 .role(request.getRole())
-                .isActive(true)
+                .status(Status.ACTIVE)
+                .joinedAt(now)
+                .updatedAt(now)
+                .createdAt(now)
                 .build();
         return UserResponse.fromEntity(userRepository.save(user));
     }
@@ -45,7 +57,7 @@ public class UserService {
                 request.getFullName(),
                 request.getEmail(),
                 request.getRole(),
-                request.getIsActive()
+                request.getStatus()
         );
 
         return UserResponse.fromEntity(userRepository.save(user));

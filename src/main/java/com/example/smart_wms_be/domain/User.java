@@ -32,11 +32,20 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
+
+    @Column(name = "joined_at")
+    private LocalDateTime joinedAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     // 로그인 시 마지막 로그인 시간 업데이트
     public void updateLastLogin() {
@@ -44,10 +53,10 @@ public class User {
     }
 
     // 비밀번호 변경 등 필요 시 추가 메서드도 가능
-    public void updateUserInfo(String fullName, String email, Role role, Boolean isActive) {
+    public void updateUserInfo(String fullName, String email, Role role, Status status) {
         this.fullName = fullName;
         this.email = email;
         this.role = role;
-        this.isActive = isActive;
+        this.status = status;
     }
 }
