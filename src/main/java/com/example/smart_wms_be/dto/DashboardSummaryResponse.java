@@ -88,5 +88,7 @@ public class DashboardSummaryResponse {
     public static class ChartData {
         private String name;
         private int value;
+        private Integer inbound;
+        private Integer outbound;
     }
 }

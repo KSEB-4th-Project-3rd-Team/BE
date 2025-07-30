@@ -28,4 +28,7 @@ public interface InOutOrderRepository extends JpaRepository<InOutOrder, Long> {
 
     // 거래처별 주문 개수 조회 (대시보드용)
     int countByCompany(Company company);
+    
+    // 날짜 + 주문 유형별 개수 조회 (라인 차트용)
+    int countByTypeAndExpectedDate(OrderType type, LocalDate expectedDate);
 }

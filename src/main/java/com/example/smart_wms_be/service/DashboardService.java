@@ -90,10 +90,20 @@ public class DashboardService {
         double completionRate = totalInbound + totalOutbound > 0 ? 
             (double)(completedInbound + completedOutbound) / (totalInbound + totalOutbound) * 100 : 0;
 
-        // 간단한 차트 데이터 생성
+        // 라인 차트용 시간별 데이터 생성 (예시: 최근 7일)
         List<DashboardSummaryResponse.ChartData> chartData = new ArrayList<>();
-        chartData.add(DashboardSummaryResponse.ChartData.builder().name("입고").value(totalInbound).build());
-        chartData.add(DashboardSummaryResponse.ChartData.builder().name("출고").value(totalOutbound).build());
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = LocalDate.now().minusDays(i);
+            int dailyInbound = orderRepository.countByTypeAndExpectedDate(OrderType.INBOUND, date);
+            int dailyOutbound = orderRepository.countByTypeAndExpectedDate(OrderType.OUTBOUND, date);
+            
+            chartData.add(DashboardSummaryResponse.ChartData.builder()
+                    .name(date.getMonthValue() + "/" + date.getDayOfMonth())
+                    .inbound(dailyInbound)
+                    .outbound(dailyOutbound)
+                    .value(dailyInbound + dailyOutbound) // 호환성을 위해 유지
+                    .build());
+        }
 
         return DashboardSummaryResponse.InOutAnalysis.builder()
                 .totalInbound(totalInbound)
