@@ -26,7 +26,11 @@ public class InventoryController {
             @RequestParam(required = false) String itemCode,
             @RequestParam(required = false) String locationCode
     ) {
-        return inventoryService.getInventory(itemCode, locationCode);
+        long startTime = System.currentTimeMillis();
+        List<InventoryResponse> result = inventoryService.getInventory(itemCode, locationCode);
+        long endTime = System.currentTimeMillis();
+        System.out.println("🚀 InventoryController.getInventory() 실행시간: " + (endTime - startTime) + "ms, 결과 개수: " + result.size());
+        return result;
     }
 
     // 재고 이력 조회

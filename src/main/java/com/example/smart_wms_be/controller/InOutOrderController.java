@@ -27,7 +27,11 @@ public class InOutOrderController {
             @RequestParam(required = false) OrderType type,
             @RequestParam(required = false) OrderStatus status
     ) {
-        return inOutOrderService.getOrders(type, status);
+        long startTime = System.currentTimeMillis();
+        List<InOutOrderResponse> result = inOutOrderService.getOrders(type, status);
+        long endTime = System.currentTimeMillis();
+        System.out.println("🚀 InOutOrderController.getOrders() 실행시간: " + (endTime - startTime) + "ms, 결과 개수: " + result.size());
+        return result;
     }
 
     @PostMapping

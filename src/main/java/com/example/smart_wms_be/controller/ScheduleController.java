@@ -25,10 +25,21 @@ public class ScheduleController {
 
     @GetMapping
     public List<ScheduleResponse> getSchedules(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start_date,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end_date
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start_date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end_date
     ) {
-        return scheduleService.getSchedules(start_date, end_date);
+        long startTime = System.currentTimeMillis();
+        // 파라미터가 없으면 기본값 설정 (현재 달)
+        if (start_date == null) {
+            start_date = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+        }
+        if (end_date == null) {
+            end_date = start_date.plusMonths(1).minusDays(1).withHour(23).withMinute(59).withSecond(59);
+        }
+        List<ScheduleResponse> result = scheduleService.getSchedules(start_date, end_date);
+        long endTime = System.currentTimeMillis();
+        System.out.println("🚀 ScheduleController.getSchedules() 실행시간: " + (endTime - startTime) + "ms, 결과 개수: " + result.size());
+        return result;
     }
 
     @PostMapping

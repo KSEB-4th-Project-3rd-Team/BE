@@ -1,5 +1,6 @@
 package com.example.smart_wms_be.controller;
 
+import com.example.smart_wms_be.dto.DashboardDataResponse;
 import com.example.smart_wms_be.dto.DashboardSummaryResponse;
 import com.example.smart_wms_be.service.DashboardService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,5 +21,15 @@ public class DashboardController {
     @GetMapping("/summary")
     public DashboardSummaryResponse getSummary() {
         return dashboardService.getSummary();
+    }
+
+    // 🚀 새로운 통합 API - 모든 대시보드 데이터를 병렬로 가져옴
+    @GetMapping("/all")
+    public DashboardDataResponse getAllDashboardData() {
+        long startTime = System.currentTimeMillis();
+        DashboardDataResponse result = dashboardService.getAllDashboardData();
+        long endTime = System.currentTimeMillis();
+        System.out.println("🚀🚀🚀 TOTAL DASHBOARD API 실행시간: " + (endTime - startTime) + "ms");
+        return result;
     }
 }
