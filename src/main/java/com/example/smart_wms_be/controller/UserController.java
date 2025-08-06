@@ -19,7 +19,11 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+        long startTime = System.currentTimeMillis();
+        List<UserResponse> result = userService.getAllUsers();
+        long endTime = System.currentTimeMillis();
+        System.out.println("🚀 UserController.getAllUsers() 실행시간: " + (endTime - startTime) + "ms, 결과 개수: " + result.size());
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping

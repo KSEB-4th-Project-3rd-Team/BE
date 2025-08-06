@@ -11,7 +11,10 @@ import java.util.Optional;
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
-    // 모든 재고를 최신 업데이트순으로 조회 (ID 역순)
+    // 모든 재고를 최신 업데이트순으로 조회 (ID 역순) - N+1 문제 해결
+    @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i " +
+                                                   "LEFT JOIN FETCH i.item " +
+                                                   "ORDER BY i.id DESC")
     List<Inventory> findAllByOrderByIdDesc();
 
     // 재고 필터링 조회 (itemCode와 locationCode 부분 일치)

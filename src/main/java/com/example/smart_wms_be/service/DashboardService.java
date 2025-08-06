@@ -1,9 +1,11 @@
 package com.example.smart_wms_be.service;
 
 import com.example.smart_wms_be.domain.*;
-import com.example.smart_wms_be.dto.DashboardSummaryResponse;
+import com.example.smart_wms_be.dto.*;
 import com.example.smart_wms_be.repository.*;
+import com.example.smart_wms_be.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -12,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +29,13 @@ public class DashboardService {
     private final AmrRepository amrRepository;
     private final ItemRepository itemRepository;
     private final CompanyRepository companyRepository;
+    
+    // 다른 서비스들을 주입받아 병렬 처리에 활용
+    private final ItemService itemService;
+    private final UserService userService;
+    private final InOutOrderService inOutOrderService;
+    private final InventoryService inventoryService;
+    private final ScheduleService scheduleService;
 
     public DashboardSummaryResponse getSummary() {
         return DashboardSummaryResponse.builder()
@@ -35,6 +45,91 @@ public class DashboardService {
                 .amrAnalysis(calculateAmrAnalysis())
                 .salesAnalysis(calculateSalesAnalysis())
                 .build();
+    }
+
+    // 🚀 병렬 처리로 모든 대시보드 데이터를 한 번에 가져오는 메서드
+    public DashboardDataResponse getAllDashboardData() {
+        long totalStartTime = System.currentTimeMillis();
+        
+        // 각 API 호출을 CompletableFuture로 병렬 실행
+        CompletableFuture<List<ItemResponse>> itemsFuture = CompletableFuture.supplyAsync(() -> {
+            long start = System.currentTimeMillis();
+            List<ItemResponse> result = itemService.getAllItems();
+            long end = System.currentTimeMillis();
+            System.out.println("⚡ Items 병렬 로딩: " + (end - start) + "ms");
+            return result;
+        });
+        
+        CompletableFuture<List<UserResponse>> usersFuture = CompletableFuture.supplyAsync(() -> {
+            long start = System.currentTimeMillis();
+            List<UserResponse> result = userService.getAllUsers();
+            long end = System.currentTimeMillis();
+            System.out.println("⚡ Users 병렬 로딩: " + (end - start) + "ms");
+            return result;
+        });
+        
+        CompletableFuture<List<InOutOrderResponse>> ordersFuture = CompletableFuture.supplyAsync(() -> {
+            long start = System.currentTimeMillis();
+            List<InOutOrderResponse> result = inOutOrderService.getOrders(null, null);
+            long end = System.currentTimeMillis();
+            System.out.println("⚡ Orders 병렬 로딩: " + (end - start) + "ms");
+            return result;
+        });
+        
+        CompletableFuture<List<InventoryResponse>> inventoryFuture = CompletableFuture.supplyAsync(() -> {
+            long start = System.currentTimeMillis();
+            List<InventoryResponse> result = inventoryService.getInventory(null, null);
+            long end = System.currentTimeMillis();
+            System.out.println("⚡ Inventory 병렬 로딩: " + (end - start) + "ms");
+            return result;
+        });
+        
+        CompletableFuture<List<ScheduleResponse>> schedulesFuture = CompletableFuture.supplyAsync(() -> {
+            long start = System.currentTimeMillis();
+            LocalDateTime startDate = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+            LocalDateTime endDate = startDate.plusMonths(1).minusDays(1).withHour(23).withMinute(59).withSecond(59);
+            List<ScheduleResponse> result = scheduleService.getSchedules(startDate, endDate);
+            long end = System.currentTimeMillis();
+            System.out.println("⚡ Schedules 병렬 로딩: " + (end - start) + "ms");
+            return result;
+        });
+        
+        CompletableFuture<DashboardSummaryResponse> summaryFuture = CompletableFuture.supplyAsync(() -> {
+            long start = System.currentTimeMillis();
+            DashboardSummaryResponse result = getSummary();
+            long end = System.currentTimeMillis();
+            System.out.println("⚡ Summary 병렬 로딩: " + (end - start) + "ms");
+            return result;
+        });
+
+        try {
+            // 모든 비동기 작업이 완료될 때까지 대기
+            List<ItemResponse> items = itemsFuture.get();
+            List<UserResponse> users = usersFuture.get();
+            List<InOutOrderResponse> orders = ordersFuture.get();
+            List<InventoryResponse> inventory = inventoryFuture.get();
+            List<ScheduleResponse> schedules = schedulesFuture.get();
+            DashboardSummaryResponse summary = summaryFuture.get();
+            
+            long totalEndTime = System.currentTimeMillis();
+            long totalTime = totalEndTime - totalStartTime;
+            
+            System.out.println("🔥🔥🔥 전체 병렬 처리 완료: " + totalTime + "ms");
+            
+            return DashboardDataResponse.builder()
+                    .items(items)
+                    .users(users)
+                    .orders(orders)
+                    .inventory(inventory)
+                    .schedules(schedules)
+                    .summary(summary)
+                    .totalLoadTime(totalTime)
+                    .build();
+                    
+        } catch (Exception e) {
+            System.err.println("병렬 처리 중 오류 발생: " + e.getMessage());
+            throw new RuntimeException("대시보드 데이터 로딩 실패", e);
+        }
     }
 
     private DashboardSummaryResponse.InventorySummary calculateInventorySummary() {

@@ -19,7 +19,11 @@ public class ItemController {
     // 전체 품목 목록 조회
     @GetMapping
     public List<ItemResponse> getItems() {
-        return itemService.getAllItems();
+        long startTime = System.currentTimeMillis();
+        List<ItemResponse> result = itemService.getAllItems();
+        long endTime = System.currentTimeMillis();
+        System.out.println("🚀 ItemController.getItems() 실행시간: " + (endTime - startTime) + "ms, 결과 개수: " + result.size());
+        return result;
     }
 
     // 품목 등록

@@ -5,13 +5,19 @@ import com.example.smart_wms_be.domain.InOutOrder;
 import com.example.smart_wms_be.domain.OrderStatus;
 import com.example.smart_wms_be.domain.OrderType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
 
 public interface InOutOrderRepository extends JpaRepository<InOutOrder, Long> {
 
-    // 모든 주문을 최신순으로 조회 (ID 역순)
+    // 모든 주문을 최신순으로 조회 (ID 역순) - N+1 문제 해결
+    @Query("SELECT DISTINCT o FROM InOutOrder o " +
+           "LEFT JOIN FETCH o.company " +
+           "LEFT JOIN FETCH o.items oi " +
+           "LEFT JOIN FETCH oi.item " +
+           "ORDER BY o.id DESC")
     List<InOutOrder> findAllByOrderByIdDesc();
 
     // 주문 유형 + 상태로 조회
