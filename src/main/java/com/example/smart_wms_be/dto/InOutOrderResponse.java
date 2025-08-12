@@ -17,6 +17,7 @@ public class InOutOrderResponse {
     private String companyName;
     private String companyCode;
     private LocalDate expectedDate;
+    private String locationCode; // 창고 구역 코드
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<OrderItemDto> items;

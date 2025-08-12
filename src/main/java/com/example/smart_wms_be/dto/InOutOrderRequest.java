@@ -13,5 +13,6 @@ public class InOutOrderRequest {
     private OrderType type;
     private Long companyId;
     private LocalDate expectedDate;
+    private String locationCode; // 창고 구역 코드
     private List<OrderItemDto> items;
 }
