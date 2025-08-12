@@ -51,4 +51,9 @@ public class InOutOrderController {
     ) {
         return inOutOrderService.updateStatus(orderId, request);
     }
+
+    @PutMapping("/{orderId}/cancel")
+    public InOutOrderResponse cancelOrder(@PathVariable Long orderId) {
+        return inOutOrderService.cancelOrder(orderId);
+    }
 }

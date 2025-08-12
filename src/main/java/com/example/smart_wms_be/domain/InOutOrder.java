@@ -25,9 +25,12 @@ public class InOutOrder {
     private OrderType type;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private OrderStatus status;
 
     private LocalDate expectedDate;
+    
+    private String locationCode; // 창고 구역 코드 (예: J-03, A-01 등)
 
     @CreatedDate
     @Column(updatable = false)

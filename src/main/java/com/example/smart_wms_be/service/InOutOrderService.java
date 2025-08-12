@@ -36,10 +36,11 @@ public class InOutOrderService {
         return orders.stream().map(order -> InOutOrderResponse.builder()
                 .orderId(order.getId())
                 .type(order.getType())
-                .status(order.getStatus().name())
+                .status(order.getStatus().name().toLowerCase())
                 .companyName(order.getCompany().getCompanyName())
                 .companyCode(order.getCompany().getCompanyCode())
                 .expectedDate(order.getExpectedDate())
+                .locationCode(order.getLocationCode())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .items(order.getItems().stream().map(item -> 
@@ -65,6 +66,7 @@ public class InOutOrderService {
                 .type(request.getType())
                 .status(OrderStatus.PENDING)
                 .expectedDate(request.getExpectedDate())
+                .locationCode(request.getLocationCode() != null ? request.getLocationCode() : "A-01") // 기본값 설정
                 .company(company)
                 .build();
 
@@ -84,11 +86,12 @@ public class InOutOrderService {
 
         return InOutOrderResponse.builder()
                 .orderId(order.getId())
-                .status(order.getStatus().name())
+                .status(order.getStatus().name().toLowerCase())
                 .type(order.getType())
                 .companyName(order.getCompany().getCompanyName())
                 .companyCode(order.getCompany().getCompanyCode())
                 .expectedDate(order.getExpectedDate())
+                .locationCode(order.getLocationCode())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .items(order.getItems().stream().map(item -> 
@@ -120,18 +123,62 @@ public class InOutOrderService {
         order.setStatus(request.getStatus());
         orderRepository.save(order);
 
-        // COMPLETED 상태로 변경될 때 재고 업데이트
+        // COMPLETED 상태로 변경될 때만 재고 업데이트
         if (request.getStatus() == OrderStatus.COMPLETED && oldStatus != OrderStatus.COMPLETED) {
             updateInventoryForCompletedOrder(order);
         }
 
         return InOutOrderResponse.builder()
                 .orderId(order.getId())
-                .status(order.getStatus().name())
+                .status(order.getStatus().name().toLowerCase())
                 .type(order.getType())
                 .companyName(order.getCompany().getCompanyName())
                 .companyCode(order.getCompany().getCompanyCode())
                 .expectedDate(order.getExpectedDate())
+                .locationCode(order.getLocationCode())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .items(order.getItems().stream().map(item -> 
+                    InOutOrderResponse.OrderItemDto.builder()
+                        .itemId(item.getItem().getId())
+                        .itemName(item.getItem().getItemName())
+                        .itemCode(item.getItem().getItemCode())
+                        .specification(item.getItem().getSpec())
+                        .requestedQuantity(item.getRequestedQuantity())
+                        .processedQuantity(item.getProcessedQuantity())
+                        .build()
+                ).collect(Collectors.toList()))
+                .build();
+    }
+
+    // 주문 취소
+    @Transactional
+    public InOutOrderResponse cancelOrder(Long orderId) {
+        InOutOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문 없음"));
+        
+        // 취소 가능한 상태인지 확인
+        if (order.getStatus() == OrderStatus.COMPLETED) {
+            throw new IllegalStateException("완료된 주문은 취소할 수 없습니다");
+        }
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("이미 취소된 주문입니다");
+        }
+        if (order.getStatus() == OrderStatus.REJECTED) {
+            throw new IllegalStateException("거절된 주문은 취소할 수 없습니다");
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+
+        return InOutOrderResponse.builder()
+                .orderId(order.getId())
+                .status(order.getStatus().name().toLowerCase())
+                .type(order.getType())
+                .companyName(order.getCompany().getCompanyName())
+                .companyCode(order.getCompany().getCompanyCode())
+                .expectedDate(order.getExpectedDate())
+                .locationCode(order.getLocationCode())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .items(order.getItems().stream().map(item -> 

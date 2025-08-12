@@ -1,0 +1,200 @@
+### 성능 최적화 전략 상세 설명
+
+---
+
+### 1. 병렬 처리: `CompletableFuture` 활용
+
+#### 가. 개념
+`CompletableFuture`는 Java 8에 도입된 비동기(Asynchronous) 프로그래밍 도구입니다. 특정 작업(예: 외부 API 호출, 무거운 DB 조회)을 별도의 스레드에서 실행하고, 그 작업이 끝나는 것을 기다리지 않고 다음 코드를 실행할 수 있게 해줍니다. 이를 통해 여러 개의 독립적인 작업을 동시에 처리하여 전체 응답 시간을 단축할 수 있습니다.
+
+#### 나. 문제 상황
+하나의 요청을 처리하는 데 여러 개의 독립적인 I/O 작업(DB 조회, API 호출 등)이 필요할 경우, 이들을 순차적으로 처리하면 각 작업의 시간이 모두 더해져 전체 응답 시간이 길어집니다.
+
+**예시: 대시보드 데이터를 가져오는 순차 처리**
+```java
+// 순차 처리 방식 (총 소요 시간 = A + B + C)
+public DashboardDataResponse getDashboardData() {
+    // 작업 A: 사용자 통계 조회 (약 1초 소요)
+    UserStats stats = userStatService.getStats();
+
+    // 작업 B: 최신 주문 목록 조회 (약 1.5초 소요)
+    List<Order> recentOrders = orderService.getRecentOrders();
+
+    // 작업 C: 재고 현황 조회 (약 0.8초 소요)
+    InventoryStatus inventoryStatus = inventoryService.getStatus();
+
+    // 총 3.3초 소요
+    return new DashboardDataResponse(stats, recentOrders, inventoryStatus);
+}
+```
+
+#### 다. 해결 방법: `CompletableFuture`로 병렬 처리
+각 작업을 별도의 스레드에서 동시에 실행하고, 모든 작업이 완료되면 결과를 조합합니다. Spring에서는 `@Async` 어노테이션을 사용하면 더 쉽게 구현할 수 있습니다.
+
+**1. 비동기 활성화**
+`@EnableAsync` 어노테이션을 설정 클래스에 추가합니다.
+```java
+// SmartWmsBeApplication.java 또는 별도 Config 클래스
+import org.springframework.scheduling.annotation.EnableAsync;
+
+@EnableAsync
+@SpringBootApplication
+public class SmartWmsBeApplication {
+    // ...
+}
+```
+
+**2. 병렬 처리 코드**
+```java
+// 병렬 처리 방식 (총 소요 시간 = 가장 오래 걸리는 작업 시간)
+public DashboardDataResponse getDashboardDataWithParallel() throws Exception {
+    // 작업 A, B, C를 각각 다른 스레드에서 비동기 실행
+    CompletableFuture<UserStats> userStatsFuture = CompletableFuture.supplyAsync(() -> userStatService.getStats());
+    CompletableFuture<List<Order>> recentOrdersFuture = CompletableFuture.supplyAsync(() -> orderService.getRecentOrders());
+    CompletableFuture<InventoryStatus> inventoryStatusFuture = CompletableFuture.supplyAsync(() -> inventoryService.getStatus());
+
+    // 모든 작업이 완료될 때까지 대기
+    CompletableFuture.allOf(userStatsFuture, recentOrdersFuture, inventoryStatusFuture).join();
+
+    // 각 Future에서 결과 가져오기
+    UserStats stats = userStatsFuture.get();
+    List<Order> recentOrders = recentOrdersFuture.get();
+    InventoryStatus inventoryStatus = inventoryStatusFuture.get();
+
+    // 가장 긴 작업인 1.5초만에 모든 작업 완료
+    return new DashboardDataResponse(stats, recentOrders, inventoryStatus);
+}
+```
+
+#### 라. 핵심 고려사항
+*   **스레드 풀 설정**: 기본 스레드 풀은 한계가 있으므로, `ThreadPoolTaskExecutor`를 별도로 설정하여 애플리케이션에 맞는 스레드 수를 확보하는 것이 중요합니다.
+*   **I/O Bound 작업에 적합**: CPU 사용량이 높은 작업보다는 네트워크 통신, DB 조회 등 대기 시간이 긴 I/O Bound 작업에 사용해야 효과가 극대화됩니다.
+
+---
+
+### 2. FETCH JOIN: N+1 문제 해결
+
+#### 가. 개념
+N+1 문제란, 연관 관계 매핑된 엔티티를 조회할 때 발생하는 대표적인 성능 저하 문제입니다.
+1.  먼저 부모 엔티티 목록을 조회하는 쿼리 1번 (예: `SELECT * FROM orders;`)
+2.  이후 각 부모 엔티티에 대해 연관된 자식 엔티티를 조회하는 쿼리가 N번 추가로 실행되는 현상 (예: `SELECT * FROM order_item WHERE order_id = ?;` 가 N번 실행)
+
+#### 나. 문제 상황
+`InOutOrder` 목록을 조회한 후, 각 주문(`InOutOrder`)에 속한 `OrderItem` 목록을 화면에 표시해야 하는 경우를 가정해 보겠습니다.
+
+```java
+// InOutOrderService.java
+public List<InOutOrderResponse> getAllOrders() {
+    List<InOutOrder> orders = inOutOrderRepository.findAll(); // 1번의 쿼리 발생
+
+    return orders.stream()
+        .map(order -> new InOutOrderResponse(
+            order.getId(),
+            order.getOrderDate(),
+            order.getOrderItems().size() // Lazy Loading으로 인해 여기서 N번의 추가 쿼리 발생
+        ))
+        .collect(Collectors.toList());
+}
+```
+위 코드에서 `order.getOrderItems().size()`를 호출하는 순간, 각 `order` 객체에 대한 `OrderItem`을 가져오기 위해 추가 쿼리가 발생합니다. 주문이 100개라면 총 1+100=101번의 쿼리가 실행됩니다.
+
+#### 다. 해결 방법: `JOIN FETCH` 사용
+JPQL(Java Persistence Query Language)에서 `JOIN FETCH`를 사용하면, 연관된 엔티티를 즉시 함께 조회하여 단 한 번의 쿼리로 모든 데이터를 가져올 수 있습니다.
+
+**`InOutOrderRepository.java` 수정**
+```java
+import org.springframework.data.jpa.repository.Query;
+
+public interface InOutOrderRepository extends JpaRepository<InOutOrder, Long> {
+
+    // JOIN FETCH를 사용하여 InOutOrder와 OrderItem을 한 번에 조회
+    @Query("SELECT DISTINCT o FROM InOutOrder o JOIN FETCH o.orderItems")
+    List<InOutOrder> findAllWithOrderItems();
+}
+```
+*   `JOIN FETCH o.orderItems`: `InOutOrder`(별칭 `o`)를 조회할 때, 연관된 `orderItems` 컬렉션도 함께 가져오라는 의미입니다.
+*   `DISTINCT`: JOIN으로 인해 `InOutOrder`가 중복 조회될 수 있으므로, `DISTINCT`를 사용하여 중복을 제거합니다.
+
+이제 서비스에서는 새로 만든 메서드를 호출하면 됩니다.
+```java
+// InOutOrderService.java
+public List<InOutOrderResponse> getAllOrders() {
+    // 단 1번의 쿼리로 모든 데이터를 가져옴
+    List<InOutOrder> orders = inOutOrderRepository.findAllWithOrderItems();
+
+    return orders.stream()
+        .map(order -> new InOutOrderResponse(
+            order.getId(),
+            order.getOrderDate(),
+            order.getOrderItems().size() // 추가 쿼리 발생 안 함
+        ))
+        .collect(Collectors.toList());
+}
+```
+
+---
+
+### 3. 배치 처리: JPA 배치 설정 최적화
+
+#### 가. 개념
+배치(Batch) 처리란, 여러 개의 `INSERT`, `UPDATE`, `DELETE` 쿼리를 한 번에 모아서 DB에 전송하는 기술입니다. 쿼리마다 네트워크 통신을 하는 대신, 여러 쿼리를 하나의 요청으로 묶어 보내므로 네트워크 오버헤드와 DB 부하를 크게 줄일 수 있습니다.
+
+#### 나. 문제 상황
+대량의 데이터를 한 번에 저장해야 할 경우(예: CSV 파일로 상품 10,000개 등록), `repository.save()`를 루프 안에서 호출하면 10,000번의 `INSERT` 쿼리가 각각 DB로 전송되어 엄청난 시간이 소요됩니다.
+
+#### 다. 해결 방법: `application.properties` 설정
+Spring Boot에서는 `application.properties` (또는 `application.yml`) 파일에 간단한 설정을 추가하는 것만으로 JPA의 쓰기 배치 기능을 활성화할 수 있습니다.
+
+```properties
+# application.properties
+
+# spring.jpa.properties.hibernate.jdbc.batch_size=500
+# spring.jpa.properties.hibernate.order_inserts=true
+# spring.jpa.properties.hibernate.order_updates=true
+# spring.jpa.properties.hibernate.batch_versioned_data=true
+```
+*   `batch_size`: 한 번에 모아서 보낼 쿼리의 개수입니다. 100~1000 사이의 값을 주로 사용하며, DB와 애플리케이션 상황에 맞게 조절합니다.
+*   `order_inserts`, `order_updates`: `INSERT`와 `UPDATE` 쿼리를 각각 모아서 실행 순서를 최적화합니다. 성능 향상에 도움이 됩니다.
+*   `batch_versioned_data`: `@Version` 어노테이션을 사용하는 낙관적 락(Optimistic Lock) 엔티티에 대해서도 배치 처리를 활성화합니다.
+
+#### 라. 핵심 고려사항
+*   **ID 생성 전략**: `GenerationType.IDENTITY`는 엔티티를 저장하는 즉시 DB에서 ID를 받아와야 하므로 배치 `INSERT`가 동작하지 않습니다. 배치 처리를 위해서는 `GenerationType.SEQUENCE`나 `GenerationType.TABLE`을 사용해야 합니다.
+*   **`saveAll` 메서드**: JPA의 `saveAll` 메서드는 내부적으로 루프를 돌며 `save`를 호출하므로, 배치 설정이 되어 있다면 자동으로 적용됩니다.
+
+---
+
+### 4. 커넥션 풀: HikariCP 튜닝
+
+#### 가. 개념
+DB 커넥션을 맺는 과정은 비용이 비싼 작업입니다. 커넥션 풀(Connection Pool)은 미리 일정 개수의 커넥션을 만들어두고, 필요할 때마다 빌려주고 반납받는 방식으로 동작하여 커넥션 생성 비용을 절약하는 기술입니다. Spring Boot 2.0부터는 `HikariCP`가 기본 커넥션 풀로 사용됩니다.
+
+#### 나. 문제 상황
+기본 설정은 대부분의 상황에서 잘 동작하지만, 트래픽이 많은 서비스에서는 커넥션 부족, 응답 지연 등의 문제가 발생할 수 있습니다. 예를 들어, 동시에 100개의 요청이 들어왔는데 커넥션 풀의 최대 크기(`maximum-pool-size`)가 10이라면, 90개의 요청은 앞선 요청이 커넥션을 반납할 때까지 대기해야 합니다.
+
+#### 다. 해결 방법: `application.properties` 튜닝
+`HikariCP`의 주요 속성을 애플리케이션의 부하 특성에 맞게 조절합니다.
+
+```properties
+# application.properties
+
+# 최대 커넥션 개수 (가장 중요한 속성)
+spring.datasource.hikari.maximum-pool-size=20
+
+# 최소 유휴 커넥션 개수 (성능을 위해 maximum-pool-size와 동일하게 설정하는 것을 권장)
+spring.datasource.hikari.minimum-idle=20
+
+# 커넥션을 얻기 위해 대기하는 최대 시간 (ms)
+spring.datasource.hikari.connection-timeout=30000
+
+# 커넥션 풀에서 커넥션이 살아있을 수 있는 최대 시간 (ms)
+spring.datasource.hikari.max-lifetime=1800000
+
+# 유휴 상태의 커넥션을 풀에서 제거하기까지 대기하는 시간 (ms)
+spring.datasource.hikari.idle-timeout=600000
+```
+
+#### 라. 주요 속성 설명 및 튜닝 가이드
+*   `maximum-pool-size`: 동시에 처리할 수 있는 DB 작업의 최대 개수. 스레드 개수, DB의 처리 능력 등을 고려하여 설정해야 합니다. 너무 크면 오히려 DB에 부하를 줄 수 있습니다. `(CPU 코어 수 * 2) + (디스크 수)` 라는 고전적인 공식이 있지만, 현대적인 애플리케이션에서는 **부하 테스트를 통해 적정 값을 찾는 것이 가장 정확**합니다.
+*   `minimum-idle`: 풀이 유지하는 최소한의 유휴 커넥션 수. `maximum-pool-size`와 같은 값으로 설정하면, 갑작스러운 트래픽 증가에도 커넥션을 새로 생성하는 비용 없이 즉시 대응할 수 있어 응답 시간을 일정하게 유지하는 데 도움이 됩니다.
+*   `connection-timeout`: 이 시간 안에 커넥션을 얻지 못하면 예외가 발생합니다. 너무 짧으면 장애로 오인할 수 있고, 너무 길면 사용자가 무한정 대기하는 경험을 할 수 있습니다.
+*   `max-lifetime`: DB나 방화벽의 타임아웃 설정보다 짧게 설정하여, 비정상적으로 끊어진 커넥션을 사용하는 것을 방지합니다.
