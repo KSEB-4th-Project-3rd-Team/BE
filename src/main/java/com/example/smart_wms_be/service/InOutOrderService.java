@@ -25,6 +25,7 @@ public class InOutOrderService {
     private final ItemRepository itemRepository;
     private final InventoryRepository inventoryRepository;
     private final InventoryTransactionRepository inventoryTransactionRepository;
+    private final RackMigrationService rackMigrationService;
 
     // 전체 주문 목록 조회 (필터 optional) - 최신순 정렬
     @Transactional(readOnly = true)
@@ -199,7 +200,7 @@ public class InOutOrderService {
         for (OrderItem orderItem : order.getItems()) {
             Item item = orderItem.getItem();
             Integer quantity = orderItem.getRequestedQuantity();
-            String locationCode = "A-01"; // 기본 위치
+            String locationCode = order.getLocationCode() != null ? order.getLocationCode() : "A-01"; // 주문의 위치 사용
             
             // 기존 재고 찾기 또는 새로 생성
             Optional<Inventory> existingInventory = inventoryRepository
@@ -229,6 +230,9 @@ public class InOutOrderService {
             }
             
             inventoryRepository.save(inventory);
+            
+            // 렉 재고와 동기화
+            rackMigrationService.syncInventoryToRack(inventory);
             
             // 재고 거래 내역 기록
             InventoryTransaction transaction = InventoryTransaction.builder()
