@@ -202,9 +202,8 @@ public class InOutOrderService {
             Integer quantity = orderItem.getRequestedQuantity();
             String locationCode = order.getLocationCode() != null ? order.getLocationCode() : "A-01"; // 주문의 위치 사용
             
-            // 기존 재고 찾기 또는 새로 생성
-            Optional<Inventory> existingInventory = inventoryRepository
-                    .findByItemAndLocationCode(item, locationCode);
+            // 기존 재고 찾기 (item 기준으로만 조회 - DB 제약조건 ux_inventory_item 고려)
+            Optional<Inventory> existingInventory = inventoryRepository.findByItem(item);
             
             Inventory inventory;
             if (existingInventory.isPresent()) {
@@ -214,6 +213,8 @@ public class InOutOrderService {
                 } else if (order.getType() == OrderType.OUTBOUND) {
                     inventory.setQuantity(Math.max(0, inventory.getQuantity() - quantity));
                 }
+                // 위치 코드도 업데이트 (주문의 위치로 이동)
+                inventory.setLocationCode(locationCode);
                 inventory.setLastUpdated(LocalDateTime.now());
             } else {
                 // 새 재고 생성 (입고의 경우만)

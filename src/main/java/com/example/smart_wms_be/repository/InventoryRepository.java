@@ -27,6 +27,9 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     // 특정 아이템과 위치로 재고 찾기
     Optional<Inventory> findByItemAndLocationCode(Item item, String locationCode);
+    
+    // 특정 아이템으로 재고 찾기 (DB 제약조건 ux_inventory_item 대응)
+    Optional<Inventory> findByItem(Item item);
 
     // 총 재고 가치 계산
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(i.quantity * it.unitPriceIn), 0) FROM Inventory i JOIN i.item it")
