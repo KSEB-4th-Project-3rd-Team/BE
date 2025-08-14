@@ -3,6 +3,7 @@ package com.example.smart_wms_be.controller;
 import com.example.smart_wms_be.dto.RackResponse;
 import com.example.smart_wms_be.dto.RackInventoryResponse;
 import com.example.smart_wms_be.dto.RackInventoryRequest;
+import com.example.smart_wms_be.dto.RackMapResponse;
 import com.example.smart_wms_be.service.RackService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,15 @@ public class RackController {
     @GetMapping
     public List<RackResponse> getAllRacks() {
         return rackService.getAllRacks();
+    }
+
+    /**
+     * 창고맵을 위한 최적화된 랙 정보 조회
+     * 위치와 활성화 상태만 빠르게 로딩
+     */
+    @GetMapping("/map")
+    public List<RackMapResponse> getRacksForMap() {
+        return rackService.getRacksForMap();
     }
 
     @GetMapping("/{rackCode}")

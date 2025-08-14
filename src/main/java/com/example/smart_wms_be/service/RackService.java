@@ -6,6 +6,7 @@ import com.example.smart_wms_be.domain.RackInventory;
 import com.example.smart_wms_be.dto.RackResponse;
 import com.example.smart_wms_be.dto.RackInventoryResponse;
 import com.example.smart_wms_be.dto.RackInventoryRequest;
+import com.example.smart_wms_be.dto.RackMapResponse;
 import com.example.smart_wms_be.repository.ItemRepository;
 import com.example.smart_wms_be.repository.RackRepository;
 import com.example.smart_wms_be.repository.RackInventoryRepository;
@@ -29,6 +30,16 @@ public class RackService {
     public List<RackResponse> getAllRacks() {
         return rackRepository.findAllActiveRacks().stream()
                 .map(this::convertToRackResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 창고맵을 위한 최적화된 랙 정보 조회
+     * 위치와 활성화 상태만 반환하여 빠른 로딩 제공
+     */
+    public List<RackMapResponse> getRacksForMap() {
+        return rackRepository.findRacksForMap().stream()
+                .map(this::convertToRackMapResponse)
                 .collect(Collectors.toList());
     }
 
@@ -154,6 +165,21 @@ public class RackService {
                 .itemName(rackInventory.getItem().getItemName())
                 .quantity(rackInventory.getQuantity())
                 .lastUpdated(rackInventory.getLastUpdated())
+                .build();
+    }
+
+    /**
+     * Object[] 쿼리 결과를 RackMapResponse로 변환
+     * 인덱스: 0=id, 1=rackCode, 2=section, 3=position, 4=isActive, 5=hasInventory
+     */
+    private RackMapResponse convertToRackMapResponse(Object[] result) {
+        return RackMapResponse.builder()
+                .id((Long) result[0])
+                .rackCode((String) result[1])
+                .section((String) result[2])
+                .position((Integer) result[3])
+                .isActive((Boolean) result[4])
+                .hasInventory((Boolean) result[5])
                 .build();
     }
 }
