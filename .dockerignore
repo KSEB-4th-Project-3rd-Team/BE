@@ -1,0 +1,30 @@
+# Environment files
+.env
+.env.*
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.idea
+.vscode
+*.iws
+*.iml
+*.ipr
+
+# Gradle
+.gradle
+!gradle/wrapper/gradle-wrapper.jar
+
+# Build outputs
+build/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
