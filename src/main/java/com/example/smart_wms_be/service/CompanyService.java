@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,7 +35,7 @@ public class CompanyService {
                 .contactPerson(request.getContactPerson())
                 .contactEmail(request.getContactEmail())
                 .contactPhone(request.getContactPhone())
-                .type(request.getType())
+                .type(request.getType() != null ? new HashSet<>(request.getType()) : null)
                 .build();
         return CompanyResponse.fromEntity(companyRepository.save(company));
     }
@@ -60,7 +62,7 @@ public class CompanyService {
             company.setAddress(request.getAddress());
         }
         if (request.getType() != null) {
-            company.setType(request.getType());
+            company.setType(request.getType() != null ? new HashSet<>(request.getType()) : null);
         }
         
         return CompanyResponse.fromEntity(companyRepository.save(company));

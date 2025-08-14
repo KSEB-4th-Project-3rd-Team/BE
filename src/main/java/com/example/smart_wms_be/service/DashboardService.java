@@ -133,7 +133,7 @@ public class DashboardService {
     }
 
     private DashboardSummaryResponse.InventorySummary calculateInventorySummary() {
-        List<Inventory> inventories = inventoryRepository.findAll();
+        List<Inventory> inventories = inventoryRepository.findAllByOrderByIdDesc();
         
         int totalItems = inventories.size();
         int normalStockItems = 0;

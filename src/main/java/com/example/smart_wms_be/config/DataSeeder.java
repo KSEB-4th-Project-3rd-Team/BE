@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -84,11 +85,11 @@ public class DataSeeder implements CommandLineRunner {
         List<Company> companiesToCreate = new ArrayList<>();
         // Suppliers
         for (int i = 1; i <= 15; i++) {
-            companiesToCreate.add(Company.builder().companyName("매입처 " + i).companyCode("S" + String.format("%03d", i)).address("주소 " + i).contactPerson("담당자 " + i).contactEmail("supplier"+i+"@example.com").contactPhone("010-1111-"+String.format("%04d", i)).type(List.of("매입처")).build());
+            companiesToCreate.add(Company.builder().companyName("매입처 " + i).companyCode("S" + String.format("%03d", i)).address("주소 " + i).contactPerson("담당자 " + i).contactEmail("supplier"+i+"@example.com").contactPhone("010-1111-"+String.format("%04d", i)).type(Set.of("매입처")).build());
         }
         // Clients
         for (int i = 1; i <= 15; i++) {
-            companiesToCreate.add(Company.builder().companyName("납품처 " + i).companyCode("C" + String.format("%03d", i)).address("주소 " + (i+15)).contactPerson("담당자 " + (i+15)).contactEmail("client"+i+"@example.com").contactPhone("010-2222-"+String.format("%04d", i)).type(List.of("납품처")).build());
+            companiesToCreate.add(Company.builder().companyName("납품처 " + i).companyCode("C" + String.format("%03d", i)).address("주소 " + (i+15)).contactPerson("담당자 " + (i+15)).contactEmail("client"+i+"@example.com").contactPhone("010-2222-"+String.format("%04d", i)).type(Set.of("납품처")).build());
         }
         companyRepository.saveAll(companiesToCreate);
     }

@@ -17,8 +17,13 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
                                                    "ORDER BY i.id DESC")
     List<Inventory> findAllByOrderByIdDesc();
 
-    // 재고 필터링 조회 (itemCode와 locationCode 부분 일치)
-    List<Inventory> findByItem_ItemCodeContainingAndLocationCodeContaining(String itemCode, String locationCode);
+    // 재고 필터링 조회 (itemCode와 locationCode 부분 일치) - N+1 해결
+    @org.springframework.data.jpa.repository.Query("SELECT i FROM Inventory i " +
+                                                   "LEFT JOIN FETCH i.item " +
+                                                   "WHERE i.item.itemCode LIKE %:itemCode% AND i.locationCode LIKE %:locationCode%")
+    List<Inventory> findByItem_ItemCodeContainingAndLocationCodeContaining(
+        @org.springframework.data.repository.query.Param("itemCode") String itemCode, 
+        @org.springframework.data.repository.query.Param("locationCode") String locationCode);
 
     // 특정 아이템과 위치로 재고 찾기
     Optional<Inventory> findByItemAndLocationCode(Item item, String locationCode);

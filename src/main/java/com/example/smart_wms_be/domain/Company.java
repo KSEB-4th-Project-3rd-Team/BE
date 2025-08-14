@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter @Setter
@@ -23,8 +24,8 @@ public class Company {
     private String contactEmail;
     private String contactPhone;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "company_types", joinColumns = @JoinColumn(name = "company_id"))
     @Column(name = "type")
-    private List<String> type; // e.g., ["CLIENT", "SUPPLIER"]
+    private Set<String> type; // e.g., ["CLIENT", "SUPPLIER"]
 }
