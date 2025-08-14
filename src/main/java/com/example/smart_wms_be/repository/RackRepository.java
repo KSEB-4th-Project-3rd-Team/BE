@@ -23,6 +23,14 @@ public interface RackRepository extends JpaRepository<Rack, Long> {
     @Query("SELECT r FROM Rack r WHERE r.isActive = true ORDER BY r.section, r.position")
     List<Rack> findAllActiveRacks();
     
+    /**
+     * N+1 쿼리 문제 해결을 위한 JOIN FETCH 최적화
+     * 랙과 재고를 한 번에 조회하여 성능 개선
+     */
+    @Query("SELECT DISTINCT r FROM Rack r LEFT JOIN FETCH r.rackInventories ri LEFT JOIN FETCH ri.item " +
+           "WHERE r.isActive = true ORDER BY r.section, r.position")
+    List<Rack> findAllActiveRacksWithInventories();
+    
     @Query("SELECT r FROM Rack r JOIN FETCH r.rackInventories ri WHERE r.rackCode = :rackCode")
     Optional<Rack> findByRackCodeWithInventories(@Param("rackCode") String rackCode);
     

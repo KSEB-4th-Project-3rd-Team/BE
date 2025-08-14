@@ -28,8 +28,9 @@ public class RackService {
     private final ItemRepository itemRepository;
 
     public List<RackResponse> getAllRacks() {
-        return rackRepository.findAllActiveRacks().stream()
-                .map(this::convertToRackResponse)
+        // N+1 쿼리 문제 해결을 위해 JOIN FETCH 사용
+        return rackRepository.findAllActiveRacksWithInventories().stream()
+                .map(this::convertToRackResponseOptimized)
                 .collect(Collectors.toList());
     }
 
@@ -140,6 +141,28 @@ public class RackService {
     private RackResponse convertToRackResponse(Rack rack) {
         List<RackInventoryResponse> inventories = rackInventoryRepository
                 .findByRackId(rack.getId()).stream()
+                .map(this::convertToRackInventoryResponse)
+                .collect(Collectors.toList());
+
+        return RackResponse.builder()
+                .id(rack.getId())
+                .rackCode(rack.getRackCode())
+                .section(rack.getSection())
+                .position(rack.getPosition())
+                .description(rack.getDescription())
+                .isActive(rack.getIsActive())
+                .createdAt(rack.getCreatedAt())
+                .updatedAt(rack.getUpdatedAt())
+                .inventories(inventories)
+                .build();
+    }
+
+    /**
+     * JOIN FETCH로 이미 로드된 데이터를 사용하는 최적화된 변환 메서드
+     * 추가 DB 쿼리 없이 메모리에서 데이터 변환
+     */
+    private RackResponse convertToRackResponseOptimized(Rack rack) {
+        List<RackInventoryResponse> inventories = rack.getRackInventories().stream()
                 .map(this::convertToRackInventoryResponse)
                 .collect(Collectors.toList());
 
