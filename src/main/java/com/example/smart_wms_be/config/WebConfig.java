@@ -9,14 +9,18 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // 모든 API에 대해
-                .allowedOrigins(
-                    "http://localhost:3000",  // 웹 FE 주소
-                    "http://localhost:8081",  // Expo 개발 서버
-                    "https://localhost:8081"  // HTTPS Expo
-                ) 
-                .allowedMethods("*") // GET, POST, PUT 등 허용
+        registry.addMapping("/**")
+                // 프론트/개발 도메인
+                .allowedOriginPatterns(
+                        "http://localhost:3000",
+                        "http://localhost:8081",
+                        "https://localhost:8081",
+                        "https://smart-wms-fe.vercel.app",
+                        "https://*.vercel.app" // ← 브랜치 프리뷰까지 허용하려면 유지, 아니면 이 줄 지워도 됨
+                )
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true); // 세션 등 인증 허용 시 필요
+                .allowCredentials(true)
+                .maxAge(3600); // 프리플라이트 캐시(초)
     }
 }
