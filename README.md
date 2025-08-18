@@ -30,6 +30,8 @@ Users · Companies · Items · InOutOrders · OrderItem · Inventory · Notifica
 ---
 
 ## 🔌 아키텍처
+<img width="602" height="392" alt="Smart_WMS 복사본 3" src="https://github.com/user-attachments/assets/7c4bcf73-e1a2-4074-83b6-acce5178a84a" />
+
 FE(Next.js) ↔ **BE(Spring Boot)** ↔ **DB(RDS)** 3계층 · **WebSocket(STOMP)** 실시간 스트림 ·  
 **Nginx(SSL/TLS)** 리버스 프록시 · **Docker on EC2** 배포
 
